@@ -129,7 +129,11 @@ export function placeFood(state: GameState): GameState {
   return { ...state, food: null, rng };
 }
 
-/** Milliseconds per tick: speeds up as you eat, capped. */
+export const START_TICK_MS = 220;
+const MIN_TICK_MS = 110;
+const SPEEDUP_PER_FRUIT_MS = 2;
+
+/** Milliseconds per tick: starts relaxed and speeds up gently as you eat, capped. */
 export function tickInterval(score: number): number {
-  return Math.max(70, 150 - score * 3);
+  return Math.max(MIN_TICK_MS, START_TICK_MS - score * SPEEDUP_PER_FRUIT_MS);
 }

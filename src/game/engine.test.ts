@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 
 import { classicConfig, dailyConfig, dayNumber, ROWS } from './daily.ts';
 import type { GameState } from './engine.ts';
-import { createGame, key, placeFood, start, step, turn } from './engine.ts';
+import { createGame, key, placeFood, start, step, tickInterval, turn } from './engine.ts';
 import { shareText } from './share.ts';
 import { currentStreak, extendStreak, previousDay } from './streak.ts';
 
@@ -77,6 +77,13 @@ describe('engine', () => {
     assert.equal(step(loop).status, 'playing');
     const longer = { ...loop, snake: [...loop.snake, { x: 4, y: 4 }] };
     assert.equal(step(longer).deathCause, 'self');
+  });
+
+  it('starts at 220ms per move and speeds up to a 110ms cap', () => {
+    assert.equal(tickInterval(0), 220);
+    assert.equal(tickInterval(10), 200);
+    assert.equal(tickInterval(55), 110);
+    assert.equal(tickInterval(200), 110);
   });
 
   it('places food on the only free cell', () => {
