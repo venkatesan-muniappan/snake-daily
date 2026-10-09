@@ -28,5 +28,6 @@
     "test": "node --test 'src/**/*.test.ts'",
     "typecheck": "tsc --noEmit"
   },
-  "private": true
+  "private": true,
+  "license": "MIT"
 }
