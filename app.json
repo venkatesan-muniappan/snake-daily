@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Daily Snake",
+    "slug": "snake-daily",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "io.github.venkatesanmuniappan.dailysnake"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0d1117",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "io.github.venkatesanmuniappan.dailysnake"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "name": "Daily Snake",
+      "shortName": "Snake",
+      "backgroundColor": "#0d1117",
+      "themeColor": "#0d1117"
+    },
+    "backgroundColor": "#0d1117"
+  }
+}
