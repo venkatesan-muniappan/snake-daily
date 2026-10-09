@@ -27,6 +27,18 @@
       "backgroundColor": "#0d1117",
       "themeColor": "#0d1117"
     },
-    "backgroundColor": "#0d1117"
+    "backgroundColor": "#0d1117",
+    "plugins": [
+      "expo-audio",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "backgroundColor": "#0d1117"
+        }
+      ],
+      "expo-asset"
+    ]
   }
 }
