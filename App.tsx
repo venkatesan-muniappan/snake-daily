@@ -7,6 +7,7 @@ import type { Mode } from './src/screens/GameScreen';
 import { GameScreen } from './src/screens/GameScreen';
 import { HowToScreen } from './src/screens/HowToScreen';
 import { MenuScreen } from './src/screens/MenuScreen';
+import { initSound } from './src/sound';
 import { hasSeenHowTo, markHowToSeen } from './src/storage';
 import { colors } from './src/theme';
 
@@ -22,6 +23,7 @@ export default function App() {
   const [menuKey, setMenuKey] = useState(0);
 
   useEffect(() => {
+    initSound();
     hasSeenHowTo().then((seen) => setScreen(seen ? { name: 'menu' } : { name: 'howto', firstRun: true }));
   }, []);
 

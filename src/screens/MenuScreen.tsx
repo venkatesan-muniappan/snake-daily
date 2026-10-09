@@ -3,15 +3,18 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { dateKey, dayNumber } from '../game/daily';
 import type { Stats } from '../storage';
+import { initSound, isMuted, setMuted } from '../sound';
 import { loadStats } from '../storage';
 import { colors } from '../theme';
 import type { Mode } from './GameScreen';
 
 export function MenuScreen({ onPlay, onHowTo }: { onPlay: (mode: Mode) => void; onHowTo: () => void }) {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [muted, setMutedState] = useState(isMuted);
 
   useEffect(() => {
     loadStats(dateKey()).then(setStats);
+    initSound().then(() => setMutedState(isMuted()));
   }, []);
 
   const daily = stats?.daily;
@@ -57,9 +60,23 @@ export function MenuScreen({ onPlay, onHowTo }: { onPlay: (mode: Mode) => void; 
         <Text style={styles.cardMeta}>Best {stats?.classicBest ?? 0}</Text>
       </Pressable>
 
-      <Pressable onPress={onHowTo} hitSlop={10} accessibilityRole="button" accessibilityLabel="How to play">
-        <Text style={styles.howto}>How to play</Text>
-      </Pressable>
+      <View style={styles.links}>
+        <Pressable onPress={onHowTo} hitSlop={10} accessibilityRole="button" accessibilityLabel="How to play">
+          <Text style={styles.howto}>How to play</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            setMuted(!muted);
+            setMutedState(!muted);
+          }}
+          hitSlop={10}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: !muted }}
+          accessibilityLabel="Sound"
+        >
+          <Text style={styles.howto}>{muted ? '🔇 Sound off' : '🔊 Sound on'}</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -91,5 +108,6 @@ const styles = StyleSheet.create({
   },
   cardTitleDark: { color: colors.accentText, fontSize: 22, fontWeight: '800', marginTop: 4 },
   cardMetaDark: { color: colors.accentText, opacity: 0.8, fontSize: 14, marginTop: 4 },
-  howto: { color: colors.muted, fontSize: 15, marginTop: 12, textDecorationLine: 'underline' },
+  links: { flexDirection: 'row', gap: 24, marginTop: 12 },
+  howto: { color: colors.muted, fontSize: 15 },
 });

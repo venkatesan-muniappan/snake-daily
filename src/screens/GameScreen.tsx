@@ -9,6 +9,7 @@ import { formatDuration, shareText } from '../game/share';
 import { useBackHandler } from '../hooks/useBackHandler';
 import { useControls } from '../hooks/useControls';
 import { haptics, shareResult } from '../platform';
+import { playSound } from '../sound';
 import type { DailyRecord } from '../storage';
 import { recordClassic, recordDaily } from '../storage';
 import { colors } from '../theme';
@@ -107,13 +108,17 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
   }, [running]);
 
   useEffect(() => {
-    if (state.score > prevScore.current) haptics.eat();
+    if (state.score > prevScore.current) {
+      haptics.eat();
+      playSound('eat');
+    }
     prevScore.current = state.score;
   }, [state.score]);
 
   useEffect(() => {
     if (state.status !== 'over') return;
     haptics.die();
+    playSound('die');
     bankTime();
     const durationMs = elapsed.current;
     const run = { score: state.score, durationMs, cause: state.deathCause };
