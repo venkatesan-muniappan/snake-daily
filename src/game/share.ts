@@ -18,8 +18,9 @@ export function shareText(opts: {
   durationMs: number;
   cause: DeathCause;
   attempts: number;
+  streak: number;
 }): string {
-  const { day, score, durationMs, cause, attempts } = opts;
+  const { day, score, durationMs, cause, attempts, streak } = opts;
   const full = Math.min(10, Math.floor(score / 5));
   const partial = full < 10 && score % 5 > 0 ? 1 : 0;
   const bar = '🟩'.repeat(full) + '🟨'.repeat(partial) + '⬛'.repeat(10 - full - partial);
@@ -28,6 +29,6 @@ export function shareText(opts: {
     `🐍 Daily Snake #${day}`,
     `🍎 ${score}  ⏱ ${formatDuration(durationMs)}  ${cause ? CAUSE[cause] : ''}`.trimEnd(),
     bar,
-    tries,
+    streak > 1 ? `${tries} · 🔥 ${streak}` : tries,
   ].join('\n');
 }

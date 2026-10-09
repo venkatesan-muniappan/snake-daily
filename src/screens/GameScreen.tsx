@@ -32,7 +32,13 @@ function reducer(state: GameState, action: Action): GameState {
 
 const configFor = (mode: Mode, date: string) => (mode === 'daily' ? dailyConfig(date) : classicConfig());
 
-type Result = { durationMs: number; best: number; daily: DailyRecord | null; isBest: boolean };
+type Result = {
+  durationMs: number;
+  best: number;
+  daily: DailyRecord | null;
+  streak: number;
+  isBest: boolean;
+};
 
 export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void }) {
   const [date] = useState(() => dateKey());
@@ -109,17 +115,24 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
     const durationMs = elapsed.current;
     const run = { score: state.score, durationMs, cause: state.deathCause };
     if (mode === 'daily') {
-      recordDaily(date, run).then((daily) =>
+      recordDaily(date, run).then(({ daily, streak, improved }) =>
         setResult({
           durationMs,
           best: daily.best,
           daily,
-          isBest: state.score >= daily.best && state.score > 0,
+          streak,
+          isBest: improved,
         }),
       );
     } else {
-      recordClassic(state.score).then((best) =>
-        setResult({ durationMs, best, daily: null, isBest: state.score >= best && state.score > 0 }),
+      recordClassic(state.score).then(({ best, improved }) =>
+        setResult({
+          durationMs,
+          best,
+          daily: null,
+          streak: 0,
+          isBest: improved,
+        }),
       );
     }
     // Only react to the transition into 'over'.
@@ -145,6 +158,7 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
             durationMs: result.durationMs,
             cause: state.deathCause,
             attempts: result.daily?.attempts ?? 1,
+            streak: result.streak,
           })
         : `🐍 Snake — ${state.score} 🍎 in ${formatDuration(result.durationMs)}`;
     const how = await shareResult(text).catch(() => null);
@@ -201,6 +215,7 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
               <Text style={styles.muted}>
                 {formatDuration(result.durationMs)} · best {result.best}
                 {result.daily ? ` · try ${result.daily.attempts}` : ''}
+                {result.streak > 1 ? ` · 🔥 ${result.streak}` : ''}
               </Text>
               <View style={styles.buttons}>
                 <Pressable style={[styles.button, styles.primary]} onPress={restart}>

@@ -23,7 +23,14 @@ export function MenuScreen({ onPlay }: { onPlay: (mode: Mode) => void }) {
       <Text style={styles.tagline}>One new board every day. Same for everyone.</Text>
 
       <Pressable style={[styles.card, styles.dailyCard]} onPress={() => onPlay('daily')}>
-        <Text style={styles.cardLabelDark}>TODAY · #{dayNumber()}</Text>
+        <View style={styles.cardTop}>
+          <Text style={styles.cardLabelDark}>TODAY · #{dayNumber()}</Text>
+          {!!stats?.streak && (
+            <Text style={styles.streak}>
+              🔥 {stats.streak} day{stats.streak === 1 ? '' : 's'}
+            </Text>
+          )}
+        </View>
         <Text style={styles.cardTitleDark}>Play the daily</Text>
         <Text style={styles.cardMetaDark}>
           {daily
@@ -56,6 +63,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceRaised,
   },
   dailyCard: { backgroundColor: colors.accent },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  streak: { color: colors.accentText, fontSize: 14, fontWeight: '700' },
   cardLabel: { color: colors.muted, fontSize: 12, fontWeight: '700', letterSpacing: 1 },
   cardTitle: { color: colors.text, fontSize: 22, fontWeight: '800', marginTop: 4 },
   cardMeta: { color: colors.muted, fontSize: 14, marginTop: 4 },

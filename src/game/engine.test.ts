@@ -5,6 +5,7 @@ import { classicConfig, dailyConfig, dayNumber, ROWS } from './daily.ts';
 import type { GameState } from './engine.ts';
 import { createGame, key, placeFood, start, step, turn } from './engine.ts';
 import { shareText } from './share.ts';
+import { currentStreak, extendStreak, previousDay } from './streak.ts';
 
 const noFood = (s: GameState): GameState => ({ ...s, food: { x: 0, y: 0 } });
 
@@ -120,7 +121,37 @@ describe('daily', () => {
 
 describe('share', () => {
   it('renders a 10-block bar', () => {
-    const text = shareText({ day: 3, score: 12, durationMs: 95_000, cause: 'self', attempts: 2 });
+    const text = shareText({ day: 3, score: 12, durationMs: 95_000, cause: 'self', attempts: 2, streak: 1 });
     assert.equal(text, '🐍 Daily Snake #3\n🍎 12  ⏱ 1:35  🌀\n🟩🟩🟨⬛⬛⬛⬛⬛⬛⬛\n2 tries');
+  });
+});
+
+describe('streak', () => {
+  it('finds the previous day across month and year boundaries', () => {
+    assert.equal(previousDay('2026-11-01'), '2026-10-31');
+    assert.equal(previousDay('2027-01-01'), '2026-12-31');
+    assert.equal(previousDay('2028-03-01'), '2028-02-29');
+  });
+
+  it('extends on consecutive days, ignores repeat plays, resets after a gap', () => {
+    let s = extendStreak(null, '2026-10-09');
+    assert.deepEqual(s, { last: '2026-10-09', count: 1 });
+    assert.equal(extendStreak(s, '2026-10-09'), s);
+    s = extendStreak(s, '2026-10-10');
+    assert.equal(s.count, 2);
+    assert.equal(extendStreak(s, '2026-10-12').count, 1);
+  });
+
+  it('shows a streak only while it is still alive', () => {
+    const s = { last: '2026-10-10', count: 4 };
+    assert.equal(currentStreak(s, '2026-10-10'), 4);
+    assert.equal(currentStreak(s, '2026-10-11'), 4);
+    assert.equal(currentStreak(s, '2026-10-12'), 0);
+    assert.equal(currentStreak(null, '2026-10-12'), 0);
+  });
+
+  it('adds the streak to the share card from day 2', () => {
+    const text = shareText({ day: 5, score: 0, durationMs: 1000, cause: 'edge', attempts: 1, streak: 3 });
+    assert.ok(text.endsWith('1 try · 🔥 3'));
   });
 });
