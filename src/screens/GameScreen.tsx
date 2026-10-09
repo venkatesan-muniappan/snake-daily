@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { Board } from '../components/Board';
 import { classicConfig, dailyConfig, dateKey, dayNumber } from '../game/daily';
@@ -39,29 +39,63 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
   const [state, dispatch] = useReducer(reducer, undefined, () => createGame(configFor(mode, date)));
   const [result, setResult] = useState<Result | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const startedAt = useRef(0);
+  const [paused, setPaused] = useState(false);
+  // Play time excludes pauses: `elapsed` banks finished stretches, `resumedAt` marks the running one.
+  const elapsed = useRef(0);
+  const resumedAt = useRef(0);
   const prevScore = useRef(0);
+  const running = state.status === 'playing' && !paused;
+  const runningRef = useRef(running);
+  runningRef.current = running;
+
+  const bankTime = () => {
+    if (resumedAt.current) elapsed.current += Date.now() - resumedAt.current;
+    resumedAt.current = 0;
+  };
+  const pause = useCallback(() => {
+    if (!runningRef.current) return;
+    bankTime();
+    setPaused(true);
+  }, []);
+  const resume = useCallback(() => setPaused(false), []);
 
   const { width, height } = useWindowDimensions();
   const boardPx = Math.min(width - 32, height - 240, 560);
   const cell = Math.max(8, Math.floor(boardPx / state.cols));
 
   const controls = useControls(
-    useCallback((dir: Dir) => dispatch({ type: 'turn', dir }), []),
-    useCallback(() => dispatch({ type: 'start' }), []),
+    useCallback(
+      (dir: Dir) => {
+        resume();
+        dispatch({ type: 'turn', dir });
+      },
+      [resume],
+    ),
+    useCallback(() => {
+      resume();
+      dispatch({ type: 'start' });
+    }, [resume]),
   );
+
+  // Switching apps (or tabs on web) pauses instead of letting the snake run blind.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') pause();
+    });
+    return () => sub.remove();
+  }, [pause]);
 
   // Game loop: re-armed whenever the speed changes.
   const interval = tickInterval(state.score);
   useEffect(() => {
-    if (state.status !== 'playing') return;
+    if (!running) return;
     const id = setInterval(() => dispatch({ type: 'tick' }), interval);
     return () => clearInterval(id);
-  }, [state.status, interval]);
+  }, [running, interval]);
 
   useEffect(() => {
-    if (state.status === 'playing' && startedAt.current === 0) startedAt.current = Date.now();
-  }, [state.status]);
+    if (running && !resumedAt.current) resumedAt.current = Date.now();
+  }, [running]);
 
   useEffect(() => {
     if (state.score > prevScore.current) haptics.eat();
@@ -71,7 +105,8 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
   useEffect(() => {
     if (state.status !== 'over') return;
     haptics.die();
-    const durationMs = Date.now() - startedAt.current;
+    bankTime();
+    const durationMs = elapsed.current;
     const run = { score: state.score, durationMs, cause: state.deathCause };
     if (mode === 'daily') {
       recordDaily(date, run).then((daily) =>
@@ -92,8 +127,10 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
   }, [state.status]);
 
   const restart = () => {
-    startedAt.current = 0;
+    elapsed.current = 0;
+    resumedAt.current = 0;
     prevScore.current = 0;
+    setPaused(false);
     setResult(null);
     dispatch({ type: 'reset', config: configFor(mode, date) });
   };
@@ -126,7 +163,15 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
           <Text style={styles.back}>‹ Menu</Text>
         </Pressable>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.score}>🍎 {state.score}</Text>
+        <View style={styles.headerRight}>
+          <Text style={styles.score}>🍎 {state.score}</Text>
+          <Pressable onPress={pause} hitSlop={12} disabled={!running} style={{ opacity: running ? 1 : 0.3 }}>
+            <View style={styles.pauseIcon}>
+              <View style={styles.pauseBar} />
+              <View style={styles.pauseBar} />
+            </View>
+          </Pressable>
+        </View>
       </View>
 
       <View {...controls} style={styles.playArea}>
@@ -138,6 +183,13 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
             <Text style={styles.subHint}>
               {mode === 'daily' ? 'Same board for everyone today' : 'Arrow keys or WASD on desktop'}
             </Text>
+          </View>
+        )}
+
+        {paused && state.status === 'playing' && (
+          <View style={styles.overlay} pointerEvents="none">
+            <Text style={styles.hint}>Paused</Text>
+            <Text style={styles.subHint}>Tap or swipe to resume</Text>
           </View>
         )}
 
@@ -173,6 +225,9 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   back: { color: colors.muted, fontSize: 16 },
   title: { color: colors.text, fontSize: 18, fontWeight: '700' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  pauseIcon: { flexDirection: 'row', gap: 4, paddingVertical: 2 },
+  pauseBar: { width: 4, height: 16, borderRadius: 1, backgroundColor: colors.muted },
   score: { color: colors.text, fontSize: 18, fontWeight: '700', fontVariant: ['tabular-nums'] },
   playArea: { alignItems: 'center', justifyContent: 'center', touchAction: 'none' } as object,
   overlay: {
