@@ -65,3 +65,13 @@ export async function recordDaily(
   ]).catch(() => {});
   return { daily: next, streak: streak.count, improved: improved && run.score > 0 };
 }
+
+const SEEN_HOWTO_KEY = 'seen:howto';
+
+export async function hasSeenHowTo(): Promise<boolean> {
+  return (await AsyncStorage.getItem(SEEN_HOWTO_KEY).catch(() => null)) === '1';
+}
+
+export async function markHowToSeen(): Promise<void> {
+  await AsyncStorage.setItem(SEEN_HOWTO_KEY, '1').catch(() => {});
+}

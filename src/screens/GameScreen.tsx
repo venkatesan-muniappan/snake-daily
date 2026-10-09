@@ -6,6 +6,7 @@ import { classicConfig, dailyConfig, dateKey, dayNumber } from '../game/daily';
 import type { Dir, GameConfig, GameState } from '../game/engine';
 import { createGame, start, step, tickInterval, turn } from '../game/engine';
 import { formatDuration, shareText } from '../game/share';
+import { useBackHandler } from '../hooks/useBackHandler';
 import { useControls } from '../hooks/useControls';
 import { haptics, shareResult } from '../platform';
 import type { DailyRecord } from '../storage';
@@ -82,6 +83,8 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
       dispatch({ type: 'start' });
     }, [resume]),
   );
+
+  useBackHandler(onExit);
 
   // Switching apps (or tabs on web) pauses instead of letting the snake run blind.
   useEffect(() => {
@@ -173,13 +176,22 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
   return (
     <View style={styles.screen}>
       <View style={[styles.header, { width: cell * state.cols }]}>
-        <Pressable onPress={onExit} hitSlop={12}>
+        <Pressable onPress={onExit} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back to menu">
           <Text style={styles.back}>‹ Menu</Text>
         </Pressable>
         <Text style={styles.title}>{title}</Text>
         <View style={styles.headerRight}>
-          <Text style={styles.score}>🍎 {state.score}</Text>
-          <Pressable onPress={pause} hitSlop={12} disabled={!running} style={{ opacity: running ? 1 : 0.3 }}>
+          <Text style={styles.score} accessibilityLabel={`Score ${state.score}`}>
+            🍎 {state.score}
+          </Text>
+          <Pressable
+            onPress={pause}
+            accessibilityRole="button"
+            accessibilityLabel="Pause"
+            hitSlop={12}
+            disabled={!running}
+            style={{ opacity: running ? 1 : 0.3 }}
+          >
             <View style={styles.pauseIcon}>
               <View style={styles.pauseBar} />
               <View style={styles.pauseBar} />
@@ -218,10 +230,19 @@ export function GameScreen({ mode, onExit }: { mode: Mode; onExit: () => void })
                 {result.streak > 1 ? ` · 🔥 ${result.streak}` : ''}
               </Text>
               <View style={styles.buttons}>
-                <Pressable style={[styles.button, styles.primary]} onPress={restart}>
+                <Pressable
+                  style={[styles.button, styles.primary]}
+                  onPress={restart}
+                  accessibilityRole="button"
+                >
                   <Text style={styles.primaryText}>Play again</Text>
                 </Pressable>
-                <Pressable style={styles.button} onPress={onShare}>
+                <Pressable
+                  style={styles.button}
+                  onPress={onShare}
+                  accessibilityRole="button"
+                  accessibilityLabel="Share result"
+                >
                   <Text style={styles.buttonText}>Share</Text>
                 </Pressable>
               </View>

@@ -7,7 +7,7 @@ import { loadStats } from '../storage';
 import { colors } from '../theme';
 import type { Mode } from './GameScreen';
 
-export function MenuScreen({ onPlay }: { onPlay: (mode: Mode) => void }) {
+export function MenuScreen({ onPlay, onHowTo }: { onPlay: (mode: Mode) => void; onHowTo: () => void }) {
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
@@ -22,7 +22,14 @@ export function MenuScreen({ onPlay }: { onPlay: (mode: Mode) => void }) {
       <Text style={styles.title}>Daily Snake</Text>
       <Text style={styles.tagline}>One new board every day. Same for everyone.</Text>
 
-      <Pressable style={[styles.card, styles.dailyCard]} onPress={() => onPlay('daily')}>
+      <Pressable
+        style={[styles.card, styles.dailyCard]}
+        onPress={() => onPlay('daily')}
+        accessibilityRole="button"
+        accessibilityLabel={`Play daily number ${dayNumber()}. ${
+          daily ? `Best ${daily.best}, ${daily.attempts} tries today.` : 'Not played yet.'
+        }${stats?.streak ? ` ${stats.streak} day streak.` : ''}`}
+      >
         <View style={styles.cardTop}>
           <Text style={styles.cardLabelDark}>TODAY · #{dayNumber()}</Text>
           {!!stats?.streak && (
@@ -39,13 +46,20 @@ export function MenuScreen({ onPlay }: { onPlay: (mode: Mode) => void }) {
         </Text>
       </Pressable>
 
-      <Pressable style={styles.card} onPress={() => onPlay('classic')}>
+      <Pressable
+        style={styles.card}
+        onPress={() => onPlay('classic')}
+        accessibilityRole="button"
+        accessibilityLabel={`Play classic. Best ${stats?.classicBest ?? 0}.`}
+      >
         <Text style={styles.cardLabel}>ENDLESS</Text>
         <Text style={styles.cardTitle}>Classic</Text>
         <Text style={styles.cardMeta}>Best {stats?.classicBest ?? 0}</Text>
       </Pressable>
 
-      <Text style={styles.howto}>Swipe to turn · eat 🍎 to grow · avoid walls and yourself</Text>
+      <Pressable onPress={onHowTo} hitSlop={10} accessibilityRole="button" accessibilityLabel="How to play">
+        <Text style={styles.howto}>How to play</Text>
+      </Pressable>
     </View>
   );
 }
@@ -77,5 +91,5 @@ const styles = StyleSheet.create({
   },
   cardTitleDark: { color: colors.accentText, fontSize: 22, fontWeight: '800', marginTop: 4 },
   cardMetaDark: { color: colors.accentText, opacity: 0.8, fontSize: 14, marginTop: 4 },
-  howto: { color: colors.muted, fontSize: 13, marginTop: 12, textAlign: 'center' },
+  howto: { color: colors.muted, fontSize: 15, marginTop: 12, textDecorationLine: 'underline' },
 });
